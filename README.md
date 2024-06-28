@@ -15,4 +15,5 @@ This is a challenge which aims at implementing an HTTP server from scratch using
 * Allow defining handlers for requests. (P1)
 * Allow defining plugins to perform logging/monitoring. (P2)
 * Can act as a static HTTP server as the fallback behavior. (P2)
+* Allow server configuration. (P2)
 * Perform response compression. (P3)
