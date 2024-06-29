@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"syscall"
+
+	"github.com/prometheus/common/server"
 )
 
 type HttpServer struct {
@@ -92,7 +94,7 @@ func (server *HttpServer) initEpoll() (err error) {
 
 func (server *HttpServer) Accept() (conn *Connection, err error) {
   config := server.HttpConfiguration
-  nfd, cliAddr, err := syscall.Accept(int(server.sockFd)) 
+  nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
 
   srvAddr := &syscall.SockaddrInet6{
 		Port: int(config.Port),
@@ -100,8 +102,8 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
 	  ZoneId: 0,
 	}
 
-  if err != nil {
-    return nil, err
+  if error != nil {
+    return nil, error
   }
 
   var loggerDest io.Writer = os.Stdout
@@ -111,5 +113,17 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
   
   logger.Printf("New connection accepted")
+  
+  error = server.addConnToServerEpoll(uint16(nfd))
+
+  if error != nil {
+    logger.Printf("Failed to add connection to epoll")
+    return nil, error
+  }
+
   return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, srvAddr: srvAddr}, nil
+}
+
+func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
+  return nil
 }
