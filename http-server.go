@@ -20,6 +20,7 @@ func (server *HttpServer) Listen() (err error) {
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
 
+  // socket creation
   sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM, 0)
   
   if error != nil {
@@ -27,6 +28,7 @@ func (server *HttpServer) Listen() (err error) {
     return error
   }
   
+  // socket listening
   error = syscall.Listen(sockFd, int(config.Backlog))
   
   if error != nil {
