@@ -1,7 +1,9 @@
 package http_server
 
 import (
-	"fmt"
+	"io"
+	"log"
+	"os"
 	"syscall"
 )
 
@@ -11,27 +13,27 @@ type HttpServer struct {
 
 func (server *HttpServer) Listen() (err error) {
   config := server.HttpConfiguration
+
+  var loggerDest io.Writer = os.Stdout
+  if !config.Verbose {
+    loggerDest = io.Discard
+  }
+  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+
   sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM, 0)
   
   if error != nil {
-    if config.Verbose {
-      fmt.Printf("Socket creation failed")
-    }
+    logger.Printf("Socket creation failed")
     return error
   }
   
   error = syscall.Listen(sockFd, int(config.Backlog))
   
   if error != nil {
-    if config.Verbose {
-      fmt.Printf("Server failed to listen on port %v", config.Port)
-    }
-
+    logger.Printf("Server failed to listen on port %v", config.Port)
     return error
   } else {
-    if config.Verbose {
-      fmt.Printf("Server is listening on port %v", config.Port)
-    }
+    logger.Printf("Server is listening on port %v", config.Port)
   }
 
   return nil
