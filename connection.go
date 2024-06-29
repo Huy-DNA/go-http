@@ -8,4 +8,6 @@ type Connection struct {
   server *HttpServer
 }
 
-
+func (conn *Connection) onMessage(callback func([] byte)) {
+  conn.server.mesSubs[conn.nfd] = messageSubscriber{conn: conn, callback: callback}
+}

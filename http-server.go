@@ -7,11 +7,16 @@ import (
 	"syscall"
 )
 
+type messageSubscriber struct {
+  conn *Connection
+  callback func([]byte)
+}
 
 type HttpServer struct {
   HttpConfiguration
   sockFd uint16
   epollFd uint16
+  mesSubs map[uint16]messageSubscriber // map nfd to messageSubscriber
 }
 
 func StartServer(config HttpConfiguration) HttpServer {
