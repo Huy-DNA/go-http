@@ -9,5 +9,5 @@ type Connection struct {
 }
 
 func (conn *Connection) onMessage(callback func([] byte)) {
-  conn.server.mesSubs[conn.nfd] = messageSubscriber{conn: conn, callback: callback}
+  conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, callback: callback})
 }

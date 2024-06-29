@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"syscall"
+  "sync"
 )
 
 type messageSubscriber struct {
@@ -16,7 +17,7 @@ type HttpServer struct {
   HttpConfiguration
   sockFd uint16
   epollFd uint16
-  mesSubs map[uint16]messageSubscriber // map nfd to messageSubscriber
+  mesSubs sync.Map // map nfd to messageSubscriber
 }
 
 func StartServer(config HttpConfiguration) HttpServer {
@@ -141,4 +142,66 @@ func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
     return error
   }
   return nil
+}
+
+func (server *HttpServer) loopAccept() {
+  for {
+    server.Accept()
+  } 
+}
+
+func (server *HttpServer) loopMessage() {
+  var loggerDest io.Writer = os.Stdout
+  if !server.Verbose {
+    loggerDest = io.Discard
+  }
+  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+
+  for {
+    epollEvent := make([] syscall.EpollEvent, 100)
+    n, error := syscall.EpollWait(int(server.epollFd), epollEvent, -1)
+    if error != nil {
+      logger.Printf("error while epolling for messages: %v", error.Error())
+      continue
+    }
+
+    for i := range n {
+      event := epollEvent[i]
+      switch {
+      case event.Events & syscall.EPOLLERR > 0:
+        logger.Printf("EPOLLERR on socket with fd %v", event.Fd)
+        syscall.Close(int(event.Fd))
+        server.mesSubs.Delete(uint16(event.Fd))
+      case event.Events & syscall.EPOLLRDHUP > 0:
+        logger.Printf("EPOLLRDHUP on socket with fd %v", event.Fd)
+        syscall.Close(int(event.Fd))
+        server.mesSubs.Delete(uint16(event.Fd))
+      case event.Events & syscall.EPOLLIN > 0:
+        logger.Printf("EPOLLIN on socket with fd %v", event.Fd)
+        sub, ok := server.mesSubs.Load(uint16(event.Fd))
+        if !ok {
+          continue
+        }
+        const BUFFER_SIZE uint = 1000
+        data := make([]byte, 0)
+        for {
+          pdata := make([]byte, BUFFER_SIZE)
+          n, err := syscall.Read(int(event.Fd), data)
+          if err != nil {
+            break
+          }
+          data = append(data, pdata...)
+          if n < int(BUFFER_SIZE) {
+            break
+          }
+        }
+        sub.(messageSubscriber).callback(data)
+      }
+    }
+  }
+}
+
+func (server *HttpServer) Loop() {
+    go server.loopAccept()
+    go server.loopMessage()
 }
