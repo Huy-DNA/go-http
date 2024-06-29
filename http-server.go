@@ -103,12 +103,6 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
   config := server.HttpConfiguration
   nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
 
-  srvAddr := &syscall.SockaddrInet6{
-		Port: int(config.Port),
-    Addr: [16]byte(config.Ip.To16()),
-	  ZoneId: 0,
-	}
-
   if error != nil {
     return nil, error
   }
@@ -128,7 +122,7 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
     return nil, error
   }
 
-  return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, srvAddr: srvAddr}, nil
+  return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, server: server}, nil
 }
 
 func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
