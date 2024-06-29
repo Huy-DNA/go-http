@@ -28,7 +28,7 @@ func (server *HttpServer) Listen() (err error) {
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
 
   // socket creation
-  sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM, 0)
+  sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM | syscall.SOCK_CLOEXEC, 0)
 
   if error != nil {
     logger.Printf("Socket creation failed")
@@ -63,7 +63,6 @@ func (server *HttpServer) Listen() (err error) {
   }
 
   server.sockFd = uint16(sockFd)
-  syscall.CloseOnExec(sockFd)
 
   return nil
 }
