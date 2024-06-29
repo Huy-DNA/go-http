@@ -30,7 +30,7 @@ func TestBuildConfiguration(t *testing.T) {
   }, "Built config should be equal to explicitly init config")
 }
 
-func TestHttpServerListent(t *testing.T) {
+func TestHttpServerListen(t *testing.T) {
   assert := assert.New(t)
 
   config := (go_http.HttpConfiguration{Verbose: true}).Build()
