@@ -104,5 +104,12 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
     return nil, err
   }
 
+  var loggerDest io.Writer = os.Stdout
+  if !config.Verbose {
+    loggerDest = io.Discard
+  }
+  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+  
+  logger.Printf("New connection accepted")
   return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, srvAddr: srvAddr}, nil
 }
