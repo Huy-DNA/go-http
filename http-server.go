@@ -67,3 +67,12 @@ func (server *HttpServer) Listen() (err error) {
   return nil
 }
 
+func (server *HttpServer) Accept() (conn *Connection, err error) {
+  nfd, cliAddr, err := syscall.Accept(int(server.sockFd)) 
+  
+  if err != nil {
+    return nil, err
+  }
+
+  return &Connection{nfd: uint16(nfd)}, nil
+}
