@@ -1,7 +1,8 @@
 package http_server
 
 import (
-  "syscall"
+	"fmt"
+	"syscall"
 )
 
 type HttpServer struct {
@@ -16,6 +17,9 @@ func (server *HttpServer) Listen() (err error) {
     return error
   }
   
+  if config.Verbose {
+    fmt.Printf("Server is listening on port %v", config.Port);
+  }
   syscall.Listen(sockFd, int(config.Backlog))
 
   return nil
