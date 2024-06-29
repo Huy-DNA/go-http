@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"syscall"
-
-	"github.com/prometheus/common/server"
 )
 
 type HttpServer struct {
