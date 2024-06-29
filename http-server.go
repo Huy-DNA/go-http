@@ -62,8 +62,31 @@ func (server *HttpServer) Listen() (err error) {
     logger.Printf("Server is listening on port %v", config.Port)
   }
 
-  server.sockFd = uint16(sockFd)
+  error = server.initEpoll()
+  if error != nil {
+    logger.Printf("Server failed to init epoll")
+    return error
+  }
 
+  server.sockFd = uint16(sockFd) 
+
+  return nil
+}
+
+func (server *HttpServer) initEpoll() (err error) {
+  if server.epollFd != 0 {
+    syscall.Close(int(server.epollFd)) 
+    server.epollFd = 0
+  }
+
+  epollFd, error := syscall.EpollCreate1(syscall.EPOLL_CLOEXEC)
+ 
+  server.epollFd = uint16(epollFd)
+
+  if error != nil {
+    return error
+  }
+  
   return nil
 }
 
