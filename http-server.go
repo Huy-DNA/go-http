@@ -9,9 +9,15 @@ import (
 
 type HttpServer struct {
   HttpConfiguration
+  sockFd uint16
 }
 
 func (server *HttpServer) Listen() (err error) {
+  if server.sockFd != 0 {
+    syscall.Close(int(server.sockFd))
+    server.sockFd = 0
+  }
+
   config := server.HttpConfiguration
 
   var loggerDest io.Writer = os.Stdout
@@ -22,12 +28,13 @@ func (server *HttpServer) Listen() (err error) {
 
   // socket creation
   sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM, 0)
-  
+
   if error != nil {
     logger.Printf("Socket creation failed")
+    syscall.Close(sockFd)
     return error
   }
-  
+ 
   // socket binding
   sockaddr := &syscall.SockaddrInet6{
 		Port: int(config.Port),
@@ -39,6 +46,7 @@ func (server *HttpServer) Listen() (err error) {
 
   if error != nil {
     logger.Printf("Socket binding to %v:%v failed", config.Ip, config.Port)
+    syscall.Close(sockFd)
     return error
   }
 
@@ -47,10 +55,14 @@ func (server *HttpServer) Listen() (err error) {
   
   if error != nil {
     logger.Printf("Server failed to listen on port %v", config.Port)
+    syscall.Close(sockFd)
     return error
   } else {
     logger.Printf("Server is listening on port %v", config.Port)
   }
+
+  server.sockFd = uint16(sockFd)
+  syscall.CloseOnExec(sockFd)
 
   return nil
 }
