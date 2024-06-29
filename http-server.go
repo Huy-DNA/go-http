@@ -125,5 +125,14 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
 }
 
 func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
+  epollEvents := syscall.EpollEvent {
+    Events: syscall.EPOLLIN | syscall.EPOLLRDHUP, // level-triggered mode, wait for reading readiness/reading disconnection from the remote peer
+    Fd: int32(server.sockFd),
+  }
+  error := syscall.EpollCtl(int(server.epollFd), syscall.EPOLL_CTL_ADD, int(nfd), &epollEvents)
+
+  if error != nil {
+    return error
+  }
   return nil
 }
