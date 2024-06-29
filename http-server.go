@@ -10,6 +10,7 @@ import (
 type HttpServer struct {
   HttpConfiguration
   sockFd uint16
+  epollFd uint16
 }
 
 func (server *HttpServer) Listen() (err error) {
