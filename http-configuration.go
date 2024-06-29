@@ -3,10 +3,11 @@ package http_server
 import (
 	"reflect"
 	"strconv"
+  "net"
 )
 
 type HttpConfiguration struct {
-  Ip string           `default:"127.0.0.1"`
+  Ip net.IP           `default:"127.0.0.1"`
   Port uint16         `default:"8000"`
   Backlog uint64      `default:"100000"`
   Verbose bool
@@ -16,9 +17,9 @@ func (config HttpConfiguration) Build() HttpConfiguration {
   typ := reflect.TypeOf(config)
 
   ip := config.Ip;
-  if ip == "" {
+  if ip == nil {
     f, _ := typ.FieldByName("Ip") 
-    ip = f.Tag.Get("default")
+    ip = net.ParseIP(f.Tag.Get("default"))
   }
 
   port := config.Port

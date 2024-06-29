@@ -28,6 +28,20 @@ func (server *HttpServer) Listen() (err error) {
     return error
   }
   
+  // socket binding
+  sockaddr := &syscall.SockaddrInet6{
+		Port: int(config.Port),
+    Addr: [16]byte(config.Ip.To16()),
+	  ZoneId: 0,
+	}
+
+  error = syscall.Bind(sockFd, sockaddr)
+
+  if error != nil {
+    logger.Printf("Socket binding to %v:%v failed", config.Ip, config.Port)
+    return error
+  }
+
   // socket listening
   error = syscall.Listen(sockFd, int(config.Backlog))
   
