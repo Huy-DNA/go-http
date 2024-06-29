@@ -11,21 +11,24 @@ func TestBuildConfiguration(t *testing.T) {
 
   config := (go_http.HttpConfiguration{
     Port: 80,
-  }).Build();
+  }).Build()
 
   assert.EqualExportedValues(config, go_http.HttpConfiguration{
     Port: 80,
     Backlog: 100000,
-  }, "Built config should be equal to explicitly init config");
+  }, "Built config should be equal to explicitly init config")
 
-  config = (go_http.HttpConfiguration{}).Build();
+  config = (go_http.HttpConfiguration{}).Build()
 
   assert.EqualExportedValues(config, go_http.HttpConfiguration{
     Port: 8000,
     Backlog: 100000,
-  }, "Built config should be equal to explicitly init config");
+  }, "Built config should be equal to explicitly init config")
 }
 
 func TestHttpServerListent(t *testing.T) {
-    
+  config := (go_http.HttpConfiguration{}).Build()
+  server := go_http.HttpServer{HttpConfiguration: config}
+
+  server.Listen()
 }

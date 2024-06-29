@@ -8,6 +8,7 @@ import (
 type HttpConfiguration struct {
   Port uint16         `default:"8000"`
   Backlog uint64      `default:"100000"`
+  Verbose bool
 }
 
 func (config HttpConfiguration) Build() HttpConfiguration {
@@ -29,5 +30,6 @@ func (config HttpConfiguration) Build() HttpConfiguration {
   return HttpConfiguration{
     Port: port,
     Backlog: backlog,
+    Verbose: config.Verbose,
   }
 }
