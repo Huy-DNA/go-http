@@ -14,6 +14,7 @@ func TestBuildConfiguration(t *testing.T) {
   }).Build()
 
   assert.EqualExportedValues(config, go_http.HttpConfiguration{
+    Ip: "127.0.0.1",
     Port: 80,
     Backlog: 100000,
   }, "Built config should be equal to explicitly init config")
@@ -21,6 +22,7 @@ func TestBuildConfiguration(t *testing.T) {
   config = (go_http.HttpConfiguration{}).Build()
 
   assert.EqualExportedValues(config, go_http.HttpConfiguration{
+    Ip: "127.0.0.1",
     Port: 8000,
     Backlog: 100000,
   }, "Built config should be equal to explicitly init config")

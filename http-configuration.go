@@ -6,6 +6,7 @@ import (
 )
 
 type HttpConfiguration struct {
+  Ip string           `default:"127.0.0.1"`
   Port uint16         `default:"8000"`
   Backlog uint64      `default:"100000"`
   Verbose bool
@@ -13,6 +14,12 @@ type HttpConfiguration struct {
 
 func (config HttpConfiguration) Build() HttpConfiguration {
   typ := reflect.TypeOf(config)
+
+  ip := config.Ip;
+  if ip == "" {
+    f, _ := typ.FieldByName("Ip") 
+    ip = f.Tag.Get("default")
+  }
 
   port := config.Port
   if port == 0 {
@@ -28,6 +35,7 @@ func (config HttpConfiguration) Build() HttpConfiguration {
   }
 
   return HttpConfiguration{
+    Ip: ip,
     Port: port,
     Backlog: backlog,
     Verbose: config.Verbose,
