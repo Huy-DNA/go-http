@@ -38,6 +38,7 @@ func TestHttpServerConn(t *testing.T) {
   server := http_server.BuildServer(config)
 
   error := server.Start()
+  defer server.Stop()
 
   assert.Nil(error, "Error should be nil");
 
@@ -55,6 +56,7 @@ func TestHttpServerLoop(t *testing.T) {
   server := http_server.BuildServer(config)
 
   error := server.Start()
+  defer server.Stop()
 
   assert.Nil(error, "Error should be nil");
 

@@ -213,7 +213,7 @@ func (server *HttpServer) Loop() <-chan *Connection {
   return server.connChan
 }
 
-func (server *HttpServer) Close() {
+func (server *HttpServer) Stop() {
   server.stopped = true
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
