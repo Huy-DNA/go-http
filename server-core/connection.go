@@ -1,6 +1,8 @@
 package server
 
-import "syscall"
+import (
+	"syscall"
+)
 
 type Connection struct {
   nfd uint16
@@ -9,5 +11,12 @@ type Connection struct {
 }
 
 func (conn *Connection) OnMessage(callback func([] byte)) {
-  conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, callback: callback})
+  buffer := make(chan []byte)
+  conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, buffer: buffer})
+
+  go func() {
+    for data := range buffer {
+      callback(data)
+    }
+  }()
 }

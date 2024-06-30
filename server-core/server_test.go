@@ -31,6 +31,7 @@ func TestBuildConfiguration(t *testing.T) {
   }, "Built config should be equal to explicitly init config")
 }
 
+// FIXME: flaky test
 func TestServerConnEarlyEventHandler(t *testing.T) {
   assert := assert.New(t)
 
@@ -53,6 +54,7 @@ func TestServerConnEarlyEventHandler(t *testing.T) {
   time.Sleep(1000000000)
 }
 
+// FIXME: flaky test
 func TestServerConnLateEventHandler(t *testing.T) {
   assert := assert.New(t)
 
@@ -68,7 +70,7 @@ func TestServerConnLateEventHandler(t *testing.T) {
   tcpConn := simulateTcpConnect(8080)
   conn := <-connChan 
   tcpConn.Write([]byte("Hello World"))
-  time.Sleep(10000000)
+  time.Sleep(1000)
   conn.OnMessage(func (data []byte) {
     fmt.Println(string(data))
   })

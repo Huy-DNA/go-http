@@ -10,7 +10,7 @@ import (
 
 type messageSubscriber struct {
   conn *Connection
-  callback func([]byte)
+  buffer chan []byte
 }
 
 type eventsController struct {
@@ -171,7 +171,7 @@ func (server *Server) loopMessage() {
             break
           }
         }
-        sub.(messageSubscriber).callback(data)
+        sub.(messageSubscriber).buffer <- data
       }
     }
   }
