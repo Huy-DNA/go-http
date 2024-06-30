@@ -164,7 +164,9 @@ func (server *HttpServer) loopMessage() {
           if err != nil {
             break
           }
-          data = append(data, pdata...)
+          if n > 0 {
+            data = append(data, pdata[:n]...)
+          }
           if n < int(BUFFER_SIZE) {
             break
           }
