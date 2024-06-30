@@ -34,7 +34,7 @@ func BuildServer(config HttpConfiguration) HttpServer {
   }
 }
 
-func (server *HttpServer) Listen() (err error) {
+func (server *HttpServer) Start() (err error) {
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
     server.sockFd = 0
