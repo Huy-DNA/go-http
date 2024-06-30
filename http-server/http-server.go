@@ -185,9 +185,9 @@ func (server *HttpServer) loopMessage() {
         if !ok {
           continue
         }
-        const BUFFER_SIZE uint = 1000
         data := make([]byte, 0)
         for {
+          const BUFFER_SIZE uint = 1000
           pdata := make([]byte, BUFFER_SIZE)
           n, err := syscall.Read(int(event.Fd), data)
           if err != nil {
