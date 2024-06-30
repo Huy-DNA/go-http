@@ -31,7 +31,7 @@ func TestBuildConfiguration(t *testing.T) {
   }, "Built config should be equal to explicitly init config")
 }
 
-func TestHttpServerConn(t *testing.T) {
+func TestHttpServerConnEarlyEventHandler(t *testing.T) {
   assert := assert.New(t)
 
   config := (server.Configuration{Verbose: true}).Build()
@@ -46,12 +46,34 @@ func TestHttpServerConn(t *testing.T) {
   tcpConn := simulateTcpConnect(8000)
   conn := <-connChan
   conn.OnMessage(func (data []byte) {
-    fmt.Println(data)
+    fmt.Println(string(data))
   }) 
-  time.Sleep(10000)
   tcpConn.Write([]byte("Hello World"))
   tcpConn.Close()
+  time.Sleep(1000000000)
+}
+
+func TestHttpServerConnLateEventHandler(t *testing.T) {
+  assert := assert.New(t)
+
+  config := (server.Configuration{Verbose: true, Port: 8080}).Build()
+  server := server.New(config)
+
+  connChan, error := server.Start()
+  defer server.Stop()
+
+  assert.Nil(error, "Error should be nil");
+
+  time.Sleep(1000)
+  tcpConn := simulateTcpConnect(8080)
+  conn := <-connChan 
+  tcpConn.Write([]byte("Hello World"))
   time.Sleep(10000000)
+  conn.OnMessage(func (data []byte) {
+    fmt.Println(string(data))
+  })
+  tcpConn.Close()
+  time.Sleep(1000000000)
 }
 
 func simulateTcpConnect(port uint16) *net.TCPConn {
