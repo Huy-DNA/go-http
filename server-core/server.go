@@ -1,11 +1,11 @@
 package server
 
 import (
-  "io"
-  "log"
-  "os"
-  "syscall"
-  "sync"
+	"io"
+	"log"
+	"os"
+	"sync"
+	"syscall"
 )
 
 type messageSubscriber struct {
@@ -45,11 +45,7 @@ func (server *Server) Start() (connChan <-chan *Connection, err error) {
     server.sockFd = 0
   }
 
-  var loggerDest io.Writer = os.Stdout
-  if !server.config.Verbose {
-    loggerDest = io.Discard
-  }
-  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+  logger := server.getLogger() 
 
   // socket creation
   sockFd, error := syscall.Socket(syscall.AF_INET6, syscall.SOCK_STREAM | syscall.SOCK_CLOEXEC, 0)
@@ -121,18 +117,6 @@ func (server *Server) loop() <-chan *Connection {
 }
 
 func (server *Server) loopAccept() {
-  for {
-    select {
-    case <-server.quitChan:
-      return // will be executed if the server is closed
-    default:
-      conn, _ := server.accept()
-      server.connChan <- conn
-    }
-  }
-}
-
-func (server *Server) loopMessage() {
   var loggerDest io.Writer = os.Stdout
   if !server.config.Verbose {
     loggerDest = io.Discard
@@ -142,6 +126,21 @@ func (server *Server) loopMessage() {
   for {
     select {
     case <-server.quitChan:
+      logger.Printf("Quitting accept loop")
+      return // will be executed if the server is closed
+    default:
+      conn, _ := server.accept()
+      server.connChan <- conn
+    }
+  }
+}
+
+func (server *Server) loopMessage() {
+  logger := server.getLogger()
+  for {
+    select {
+    case <-server.quitChan:
+      logger.Printf("Quitting message loop")
       return // will be executed if the server is closed
     default:
       epollEvent := make([] syscall.EpollEvent, 100)
@@ -222,11 +221,7 @@ func (server *Server) accept() (conn *Connection, err error) {
     return nil, error
   }
 
-  var loggerDest io.Writer = os.Stdout
-  if !server.config.Verbose {
-    loggerDest = io.Discard
-  }
-  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+  logger := server.getLogger()
   
   logger.Printf("New connection accepted")
   
@@ -238,4 +233,12 @@ func (server *Server) accept() (conn *Connection, err error) {
   }
 
   return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, server: server}, nil
+}
+
+func (server *Server) getLogger() *log.Logger {
+  var loggerDest io.Writer = os.Stdout
+  if !server.config.Verbose {
+    loggerDest = io.Discard
+  }
+  return log.New(loggerDest, "Log: ", log.LstdFlags)
 }
