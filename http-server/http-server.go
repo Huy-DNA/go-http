@@ -95,59 +95,21 @@ func (server *HttpServer) Start() (connChan <-chan *Connection, err error) {
   return server.connChan, nil
 }
 
-func (server *HttpServer) initEpoll() (err error) {
-  if server.epollFd != 0 {
-    syscall.Close(int(server.epollFd)) 
-    server.epollFd = 0
+func (server *HttpServer) Stop() {
+  server.stopped = true
+  if server.sockFd != 0 {
+    syscall.Close(int(server.sockFd))
   }
-
-  epollFd, error := syscall.EpollCreate1(syscall.EPOLL_CLOEXEC)
- 
-  server.epollFd = uint16(epollFd)
-
-  if error != nil {
-    return error
-  }
-  
-  return nil
+  server.sockFd = 0
 }
 
-func (server *HttpServer) accept() (conn *Connection, err error) {
-  nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
+// Internal methods
 
-  if error != nil {
-    return nil, error
-  }
+func (server *HttpServer) loop() <-chan *Connection {
+  go server.loopAccept()
+  go server.loopMessage()
 
-  var loggerDest io.Writer = os.Stdout
-  if !server.config.Verbose {
-    loggerDest = io.Discard
-  }
-  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
-  
-  logger.Printf("New connection accepted")
-  
-  error = server.addConnToServerEpoll(uint16(nfd))
-
-  if error != nil {
-    logger.Printf("Failed to add connection to epoll")
-    return nil, error
-  }
-
-  return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, server: server}, nil
-}
-
-func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
-  epollEvents := syscall.EpollEvent {
-    Events: syscall.EPOLLIN | syscall.EPOLLRDHUP, // level-triggered mode, wait for reading readiness/reading disconnection from the remote peer
-    Fd: int32(server.sockFd),
-  }
-  error := syscall.EpollCtl(int(server.epollFd), syscall.EPOLL_CTL_ADD, int(nfd), &epollEvents)
-
-  if error != nil {
-    return error
-  }
-  return nil
+  return server.connChan
 }
 
 func (server *HttpServer) loopAccept() {
@@ -208,17 +170,57 @@ func (server *HttpServer) loopMessage() {
   }
 }
 
-func (server *HttpServer) loop() <-chan *Connection {
-  go server.loopAccept()
-  go server.loopMessage()
+func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
+  epollEvents := syscall.EpollEvent {
+    Events: syscall.EPOLLIN | syscall.EPOLLRDHUP, // level-triggered mode, wait for reading readiness/reading disconnection from the remote peer
+    Fd: int32(server.sockFd),
+  }
+  error := syscall.EpollCtl(int(server.epollFd), syscall.EPOLL_CTL_ADD, int(nfd), &epollEvents)
 
-  return server.connChan
+  if error != nil {
+    return error
+  }
+  return nil
 }
 
-func (server *HttpServer) Stop() {
-  server.stopped = true
-  if server.sockFd != 0 {
-    syscall.Close(int(server.sockFd))
+func (server *HttpServer) initEpoll() (err error) {
+  if server.epollFd != 0 {
+    syscall.Close(int(server.epollFd)) 
+    server.epollFd = 0
   }
-  server.sockFd = 0
+
+  epollFd, error := syscall.EpollCreate1(syscall.EPOLL_CLOEXEC)
+ 
+  server.epollFd = uint16(epollFd)
+
+  if error != nil {
+    return error
+  }
+  
+  return nil
+}
+
+func (server *HttpServer) accept() (conn *Connection, err error) {
+  nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
+
+  if error != nil {
+    return nil, error
+  }
+
+  var loggerDest io.Writer = os.Stdout
+  if !server.config.Verbose {
+    loggerDest = io.Discard
+  }
+  logger := log.New(loggerDest, "Log: ", log.LstdFlags)
+  
+  logger.Printf("New connection accepted")
+  
+  error = server.addConnToServerEpoll(uint16(nfd))
+
+  if error != nil {
+    logger.Printf("Failed to add connection to epoll")
+    return nil, error
+  }
+
+  return &Connection{nfd: uint16(nfd), cliAddr: cliAddr, server: server}, nil
 }
