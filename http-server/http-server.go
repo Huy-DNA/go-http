@@ -34,7 +34,7 @@ func BuildServer(config HttpConfiguration) HttpServer {
   }
 }
 
-func (server *HttpServer) Start() (err error) {
+func (server *HttpServer) Start() (connChan <-chan *Connection, err error) {
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
     server.sockFd = 0
@@ -52,7 +52,7 @@ func (server *HttpServer) Start() (err error) {
   if error != nil {
     logger.Printf("Socket creation failed")
     syscall.Close(sockFd)
-    return error
+    return nil, error
   }
  
   // socket binding
@@ -67,7 +67,7 @@ func (server *HttpServer) Start() (err error) {
   if error != nil {
     logger.Printf("Socket binding to %v:%v failed", server.config.Ip, server.config.Port)
     syscall.Close(sockFd)
-    return error
+    return nil, error
   }
 
   // socket listening
@@ -76,7 +76,7 @@ func (server *HttpServer) Start() (err error) {
   if error != nil {
     logger.Printf("Server failed to listen on port %v", server.config.Port)
     syscall.Close(sockFd)
-    return error
+    return nil, error
   } else {
     logger.Printf("Server is listening on port %v", server.config.Port)
   }
@@ -84,13 +84,15 @@ func (server *HttpServer) Start() (err error) {
   error = server.initEpoll()
   if error != nil {
     logger.Printf("Server failed to init epoll")
-    return error
+    return nil, error
   }
 
   server.sockFd = uint16(sockFd) 
   server.stopped = false
 
-  return nil
+  server.loop()
+
+  return server.connChan, nil
 }
 
 func (server *HttpServer) initEpoll() (err error) {
@@ -110,7 +112,7 @@ func (server *HttpServer) initEpoll() (err error) {
   return nil
 }
 
-func (server *HttpServer) Accept() (conn *Connection, err error) {
+func (server *HttpServer) accept() (conn *Connection, err error) {
   nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
 
   if error != nil {
@@ -150,7 +152,7 @@ func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
 
 func (server *HttpServer) loopAccept() {
   for !server.stopped {
-    conn, _ := server.Accept()
+    conn, _ := server.accept()
     server.connChan <- conn
   }
 }
@@ -206,7 +208,7 @@ func (server *HttpServer) loopMessage() {
   }
 }
 
-func (server *HttpServer) Loop() <-chan *Connection {
+func (server *HttpServer) loop() <-chan *Connection {
   go server.loopAccept()
   go server.loopMessage()
 

@@ -37,33 +37,13 @@ func TestHttpServerConn(t *testing.T) {
   config := (http_server.HttpConfiguration{Verbose: true}).Build()
   server := http_server.BuildServer(config)
 
-  error := server.Start()
+  _, error := server.Start()
   defer server.Stop()
 
   assert.Nil(error, "Error should be nil");
-
-  go server.Accept()
 
   time.Sleep(1000)
   simulateTcpConnect(8000)
-  time.Sleep(1000)
-}
-
-func TestHttpServerLoop(t *testing.T) {
-  assert := assert.New(t)
-
-  config := (http_server.HttpConfiguration{Verbose: true}).Build()
-  server := http_server.BuildServer(config)
-
-  error := server.Start()
-  defer server.Stop()
-
-  assert.Nil(error, "Error should be nil");
-
-  server.Loop()
-
-  time.Sleep(1000)
-  // simulateTcpConnect(8000)
   time.Sleep(1000)
 }
 
