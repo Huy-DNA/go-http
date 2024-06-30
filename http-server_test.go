@@ -5,27 +5,26 @@ import (
 	"net"
 	"testing"
 	"time"
-
-	go_http "github.com/Huy-DNA/go-http"
+	"github.com/Huy-DNA/go-http/http-server"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildConfiguration(t *testing.T) {
   assert := assert.New(t)
 
-  config := (go_http.HttpConfiguration{
+  config := (http_server.HttpConfiguration{
     Port: 80,
   }).Build()
 
-  assert.EqualExportedValues(config, go_http.HttpConfiguration{
+  assert.EqualExportedValues(config, http_server.HttpConfiguration{
     Ip: net.ParseIP("127.0.0.1"),
     Port: 80,
     Backlog: 100000,
   }, "Built config should be equal to explicitly init config")
 
-  config = (go_http.HttpConfiguration{}).Build()
+  config = (http_server.HttpConfiguration{}).Build()
 
-  assert.EqualExportedValues(config, go_http.HttpConfiguration{
+  assert.EqualExportedValues(config, http_server.HttpConfiguration{
     Ip: net.ParseIP("127.0.0.1"),
     Port: 8000,
     Backlog: 100000,
@@ -35,8 +34,8 @@ func TestBuildConfiguration(t *testing.T) {
 func TestHttpServerConn(t *testing.T) {
   assert := assert.New(t)
 
-  config := (go_http.HttpConfiguration{Verbose: true}).Build()
-  server := go_http.HttpServer{HttpConfiguration: config}
+  config := (http_server.HttpConfiguration{Verbose: true}).Build()
+  server := http_server.HttpServer{HttpConfiguration: config}
 
   error := server.Listen()
 
