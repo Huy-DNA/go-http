@@ -35,7 +35,7 @@ func TestHttpServerConn(t *testing.T) {
   assert := assert.New(t)
 
   config := (http_server.HttpConfiguration{Verbose: true}).Build()
-  server := http_server.HttpServer{HttpConfiguration: config}
+  server := http_server.BuildServer(config)
 
   error := server.Listen()
 
@@ -52,7 +52,7 @@ func TestHttpServerLoop(t *testing.T) {
   assert := assert.New(t)
 
   config := (http_server.HttpConfiguration{Verbose: true}).Build()
-  server := http_server.HttpServer{HttpConfiguration: config}
+  server := http_server.BuildServer(config)
 
   error := server.Listen()
 

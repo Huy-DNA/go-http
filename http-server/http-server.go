@@ -16,7 +16,7 @@ type messageSubscriber struct {
 type eventsController struct {
   mesSubs sync.Map
   connChan chan *Connection
-  stopChan chan bool
+  stopped bool
 }
 
 type HttpServer struct {
@@ -26,7 +26,7 @@ type HttpServer struct {
   epollFd uint16
 }
 
-func StartServer(config HttpConfiguration) HttpServer {
+func BuildServer(config HttpConfiguration) HttpServer {
   return HttpServer{
     config: config,
     sockFd: 0,
@@ -88,6 +88,7 @@ func (server *HttpServer) Listen() (err error) {
   }
 
   server.sockFd = uint16(sockFd) 
+  server.stopped = false
 
   return nil
 }
@@ -148,7 +149,7 @@ func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
 }
 
 func (server *HttpServer) loopAccept() {
-  for {
+  for !server.stopped {
     conn, _ := server.Accept()
     server.connChan <- conn
   }
@@ -161,7 +162,7 @@ func (server *HttpServer) loopMessage() {
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
 
-  for {
+  for !server.stopped {
     epollEvent := make([] syscall.EpollEvent, 100)
     n, error := syscall.EpollWait(int(server.epollFd), epollEvent, -1)
     if error != nil {
@@ -206,8 +207,14 @@ func (server *HttpServer) loopMessage() {
 }
 
 func (server *HttpServer) Loop() <-chan *Connection {
-    go server.loopAccept()
-    go server.loopMessage()
+  go server.loopAccept()
+  go server.loopMessage()
 
-    return server.connChan
+  return server.connChan
+}
+
+func (server *HttpServer) Close() {
+  server.stopped = true
+  syscall.Close(int(server.sockFd))
+  server.sockFd = 0
 }
