@@ -15,7 +15,7 @@ type messageSubscriber struct {
 
 type eventsController struct {
   mesSubs sync.Map
-  connChan chan Connection
+  connChan chan *Connection
   stopChan chan bool
 }
 
@@ -149,7 +149,8 @@ func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
 
 func (server *HttpServer) loopAccept() {
   for {
-    server.Accept()
+    conn, _ := server.Accept()
+    server.connChan <- conn
   }
 }
 
@@ -204,7 +205,7 @@ func (server *HttpServer) loopMessage() {
   }
 }
 
-func (server *HttpServer) Loop() <-chan Connection {
+func (server *HttpServer) Loop() <-chan *Connection {
     go server.loopAccept()
     go server.loopMessage()
 
