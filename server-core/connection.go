@@ -16,6 +16,9 @@ func (conn *Connection) OnMessage(callback func([] byte)) {
 
   go func() {
     for data := range buffer {
+      if conn.server.stopped {
+        return
+      }
       callback(data)
     }
   }()
