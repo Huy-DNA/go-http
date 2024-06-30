@@ -179,7 +179,7 @@ func (server *HttpServer) loopMessage() {
 
 func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
   epollEvents := syscall.EpollEvent {
-    Events: syscall.EPOLLIN | syscall.EPOLLRDHUP | (syscall.EPOLLET & 0xffffffff), // level-triggered mode, wait for reading readiness/reading disconnection from the remote peer
+    Events: syscall.EPOLLIN | syscall.EPOLLRDHUP | (syscall.EPOLLET & 0xffffffff), // edge-triggered mode, wait for reading readiness/reading disconnection from the remote peer
     Fd: int32(nfd),
   }
   error := syscall.EpollCtl(int(server.epollFd), syscall.EPOLL_CTL_ADD, int(nfd), &epollEvents)
