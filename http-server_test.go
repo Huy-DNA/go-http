@@ -51,5 +51,9 @@ func TestHttpServerConn(t *testing.T) {
 func simulateTcpConnect(port uint16) {
   servAddr := fmt.Sprintf("localhost:%v", port)
   tcpAddr, _ := net.ResolveTCPAddr("tcp", servAddr)
-  net.DialTCP("tcp", nil, tcpAddr)
+  tcpConn, error := net.DialTCP("tcp", nil, tcpAddr)
+  if error != nil {
+    panic("Failed to dial TCP!")
+  }
+  tcpConn.Write([]byte("Hello world!"));
 }
