@@ -31,7 +31,7 @@ func TestBuildConfiguration(t *testing.T) {
   }, "Built config should be equal to explicitly init config")
 }
 
-func TestHttpServerConnEarlyEventHandler(t *testing.T) {
+func TestServerConnEarlyEventHandler(t *testing.T) {
   assert := assert.New(t)
 
   config := (server.Configuration{Verbose: true}).Build()
@@ -53,7 +53,7 @@ func TestHttpServerConnEarlyEventHandler(t *testing.T) {
   time.Sleep(1000000000)
 }
 
-func TestHttpServerConnLateEventHandler(t *testing.T) {
+func TestServerConnLateEventHandler(t *testing.T) {
   assert := assert.New(t)
 
   config := (server.Configuration{Verbose: true, Port: 8080}).Build()
