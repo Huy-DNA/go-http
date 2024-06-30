@@ -144,7 +144,7 @@ func (server *Server) loopMessage() {
       return // will be executed if the server is closed
     default:
       epollEvent := make([] syscall.EpollEvent, 100)
-      n, error := syscall.EpollWait(int(server.epollFd), epollEvent, -1)
+      n, error := syscall.EpollWait(int(server.epollFd), epollEvent, 1000)
       if error != nil {
         logger.Printf("error while epolling for messages: %v", error.Error())
         continue
