@@ -15,11 +15,13 @@ func (conn *Connection) OnMessage(callback func([] byte)) {
   conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, buffer: buffer})
 
   go func() {
-    for data := range buffer {
-      if conn.server.stopped {
+    for {
+      select {
+      case data := <-buffer:
+        callback(data)
+      case <-conn.server.quitChan:
         return
       }
-      callback(data)
     }
   }()
 }

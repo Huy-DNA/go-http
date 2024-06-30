@@ -16,7 +16,7 @@ type messageSubscriber struct {
 type eventsController struct {
   mesSubs sync.Map
   connChan chan *Connection
-  stopped bool
+  quitChan chan struct{}
 }
 
 type Server struct {
@@ -34,7 +34,7 @@ func New(config Configuration) Server {
     eventsController: eventsController{
       mesSubs: sync.Map{},
       connChan: make(chan *Connection, config.Backlog),
-      stopped: true,
+      quitChan: make(chan struct{}),
     },
   }
 }
@@ -93,7 +93,6 @@ func (server *Server) Start() (connChan <-chan *Connection, err error) {
   }
 
   server.sockFd = uint16(sockFd) 
-  server.stopped = false
 
   server.loop()
 
@@ -101,11 +100,15 @@ func (server *Server) Start() (connChan <-chan *Connection, err error) {
 }
 
 func (server *Server) Stop() {
-  server.stopped = true
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
   }
   server.sockFd = 0
+  if server.epollFd != 0 {
+    syscall.Close(int(server.epollFd))
+  }
+  server.epollFd = 0
+  close(server.quitChan)
 }
 
 // Internal methods
@@ -118,9 +121,14 @@ func (server *Server) loop() <-chan *Connection {
 }
 
 func (server *Server) loopAccept() {
-  for !server.stopped {
-    conn, _ := server.accept()
-    server.connChan <- conn
+  for {
+    select {
+    case <-server.quitChan:
+      return // will be executed if the server is closed
+    default:
+      conn, _ := server.accept()
+      server.connChan <- conn
+    }
   }
 }
 
@@ -131,47 +139,52 @@ func (server *Server) loopMessage() {
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
 
-  for !server.stopped {
-    epollEvent := make([] syscall.EpollEvent, 100)
-    n, error := syscall.EpollWait(int(server.epollFd), epollEvent, -1)
-    if error != nil {
-      logger.Printf("error while epolling for messages: %v", error.Error())
-      continue
-    }
+  for {
+    select {
+    case <-server.quitChan:
+      return // will be executed if the server is closed
+    default:
+      epollEvent := make([] syscall.EpollEvent, 100)
+      n, error := syscall.EpollWait(int(server.epollFd), epollEvent, -1)
+      if error != nil {
+        logger.Printf("error while epolling for messages: %v", error.Error())
+        continue
+      }
 
-    for i := range n {
-      event := epollEvent[i]
-      switch {
-      case event.Events & syscall.EPOLLERR > 0:
-        logger.Printf("EPOLLERR on socket with fd %v", event.Fd)
-        syscall.Close(int(event.Fd))
-        server.mesSubs.Delete(uint16(event.Fd))
-      case event.Events & syscall.EPOLLRDHUP > 0:
-        logger.Printf("EPOLLRDHUP on socket with fd %v", event.Fd)
-        syscall.Close(int(event.Fd))
-        server.mesSubs.Delete(uint16(event.Fd))
-      case event.Events & syscall.EPOLLIN > 0:
-        logger.Printf("EPOLLIN on socket with fd %v", event.Fd)
-        sub, ok := server.mesSubs.Load(uint16(event.Fd))
-        if !ok {
-          continue
+      for i := range n {
+        event := epollEvent[i]
+        switch {
+        case event.Events & syscall.EPOLLERR > 0:
+          logger.Printf("EPOLLERR on socket with fd %v", event.Fd)
+          syscall.Close(int(event.Fd))
+          server.mesSubs.Delete(uint16(event.Fd))
+        case event.Events & syscall.EPOLLRDHUP > 0:
+          logger.Printf("EPOLLRDHUP on socket with fd %v", event.Fd)
+          syscall.Close(int(event.Fd))
+          server.mesSubs.Delete(uint16(event.Fd))
+        case event.Events & syscall.EPOLLIN > 0:
+          logger.Printf("EPOLLIN on socket with fd %v", event.Fd)
+          sub, ok := server.mesSubs.Load(uint16(event.Fd))
+          if !ok {
+            continue
+          }
+          data := make([]byte, 0)
+          for {
+            const BUFFER_SIZE uint = 1000
+            pdata := make([]byte, BUFFER_SIZE)
+            n, err := syscall.Read(int(event.Fd), pdata)
+            if err != nil {
+              break
+            }
+            if n > 0 {
+              data = append(data, pdata[:n]...)
+            }
+            if n < int(BUFFER_SIZE) {
+              break
+            }
+          }
+          sub.(messageSubscriber).buffer <- data
         }
-        data := make([]byte, 0)
-        for {
-          const BUFFER_SIZE uint = 1000
-          pdata := make([]byte, BUFFER_SIZE)
-          n, err := syscall.Read(int(event.Fd), pdata)
-          if err != nil {
-            break
-          }
-          if n > 0 {
-            data = append(data, pdata[:n]...)
-          }
-          if n < int(BUFFER_SIZE) {
-            break
-          }
-        }
-        sub.(messageSubscriber).buffer <- data
       }
     }
   }
@@ -191,11 +204,6 @@ func (server *Server) addConnToServerEpoll(nfd uint16) (err error) {
 }
 
 func (server *Server) initEpoll() (err error) {
-  if server.epollFd != 0 {
-    syscall.Close(int(server.epollFd)) 
-    server.epollFd = 0
-  }
-
   epollFd, error := syscall.EpollCreate1(syscall.EPOLL_CLOEXEC)
  
   server.epollFd = uint16(epollFd)
