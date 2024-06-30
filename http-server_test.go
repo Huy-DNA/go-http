@@ -35,7 +35,7 @@ func TestHttpServerConn(t *testing.T) {
   assert := assert.New(t)
 
   config := (http_server.HttpConfiguration{Verbose: true}).Build()
-  server := http_server.BuildServer(config)
+  server := http_server.New(config)
 
   connChan, error := server.Start()
   defer server.Stop()

@@ -26,7 +26,7 @@ type HttpServer struct {
   epollFd uint16
 }
 
-func BuildServer(config HttpConfiguration) HttpServer {
+func New(config HttpConfiguration) HttpServer {
   return HttpServer{
     config: config,
     sockFd: 0,
