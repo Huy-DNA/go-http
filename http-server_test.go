@@ -48,6 +48,23 @@ func TestHttpServerConn(t *testing.T) {
   time.Sleep(1000)
 }
 
+func TestHttpServerLoop(t *testing.T) {
+  assert := assert.New(t)
+
+  config := (http_server.HttpConfiguration{Verbose: true}).Build()
+  server := http_server.HttpServer{HttpConfiguration: config}
+
+  error := server.Listen()
+
+  assert.Nil(error, "Error should be nil");
+
+  server.Loop()
+
+  time.Sleep(1000)
+  // simulateTcpConnect(8000)
+  time.Sleep(1000)
+}
+
 func simulateTcpConnect(port uint16) {
   servAddr := fmt.Sprintf("localhost:%v", port)
   tcpAddr, _ := net.ResolveTCPAddr("tcp", servAddr)

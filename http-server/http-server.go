@@ -13,16 +13,20 @@ type messageSubscriber struct {
   callback func([]byte)
 }
 
+type eventsController struct {
+  mesSubs sync.Map
+}
+
 type HttpServer struct {
-  HttpConfiguration
+  config HttpConfiguration
+  eventsController
   sockFd uint16
   epollFd uint16
-  mesSubs sync.Map // map nfd to messageSubscriber
 }
 
 func StartServer(config HttpConfiguration) HttpServer {
   return HttpServer{
-    HttpConfiguration: config,
+    config: config,
     sockFd: 0,
     epollFd: 0,
   }
@@ -34,10 +38,8 @@ func (server *HttpServer) Listen() (err error) {
     server.sockFd = 0
   }
 
-  config := server.HttpConfiguration
-
   var loggerDest io.Writer = os.Stdout
-  if !config.Verbose {
+  if !server.config.Verbose {
     loggerDest = io.Discard
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
@@ -53,28 +55,28 @@ func (server *HttpServer) Listen() (err error) {
  
   // socket binding
   sockaddr := &syscall.SockaddrInet6{
-		Port: int(config.Port),
-    Addr: [16]byte(config.Ip.To16()),
+		Port: int(server.config.Port),
+    Addr: [16]byte(server.config.Ip.To16()),
 	  ZoneId: 0,
 	}
 
   error = syscall.Bind(sockFd, sockaddr)
 
   if error != nil {
-    logger.Printf("Socket binding to %v:%v failed", config.Ip, config.Port)
+    logger.Printf("Socket binding to %v:%v failed", server.config.Ip, server.config.Port)
     syscall.Close(sockFd)
     return error
   }
 
   // socket listening
-  error = syscall.Listen(sockFd, int(config.Backlog))
+  error = syscall.Listen(sockFd, int(server.config.Backlog))
   
   if error != nil {
-    logger.Printf("Server failed to listen on port %v", config.Port)
+    logger.Printf("Server failed to listen on port %v", server.config.Port)
     syscall.Close(sockFd)
     return error
   } else {
-    logger.Printf("Server is listening on port %v", config.Port)
+    logger.Printf("Server is listening on port %v", server.config.Port)
   }
 
   error = server.initEpoll()
@@ -106,7 +108,6 @@ func (server *HttpServer) initEpoll() (err error) {
 }
 
 func (server *HttpServer) Accept() (conn *Connection, err error) {
-  config := server.HttpConfiguration
   nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
 
   if error != nil {
@@ -114,7 +115,7 @@ func (server *HttpServer) Accept() (conn *Connection, err error) {
   }
 
   var loggerDest io.Writer = os.Stdout
-  if !config.Verbose {
+  if !server.config.Verbose {
     loggerDest = io.Discard
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
@@ -152,7 +153,7 @@ func (server *HttpServer) loopAccept() {
 
 func (server *HttpServer) loopMessage() {
   var loggerDest io.Writer = os.Stdout
-  if !server.Verbose {
+  if !server.config.Verbose {
     loggerDest = io.Discard
   }
   logger := log.New(loggerDest, "Log: ", log.LstdFlags)
