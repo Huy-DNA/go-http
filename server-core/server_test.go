@@ -1,30 +1,30 @@
-package http_server_test
+package server_test
 
 import (
 	"fmt"
 	"net"
 	"testing"
 	"time"
-	"github.com/Huy-DNA/go-http/http-server"
+	"github.com/Huy-DNA/go-http/server-core"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildConfiguration(t *testing.T) {
   assert := assert.New(t)
 
-  config := (http_server.HttpConfiguration{
+  config := (server.Configuration{
     Port: 80,
   }).Build()
 
-  assert.EqualExportedValues(config, http_server.HttpConfiguration{
+  assert.EqualExportedValues(config, server.Configuration{
     Ip: net.ParseIP("127.0.0.1"),
     Port: 80,
     Backlog: 100000,
   }, "Built config should be equal to explicitly init config")
 
-  config = (http_server.HttpConfiguration{}).Build()
+  config = (server.Configuration{}).Build()
 
-  assert.EqualExportedValues(config, http_server.HttpConfiguration{
+  assert.EqualExportedValues(config, server.Configuration{
     Ip: net.ParseIP("127.0.0.1"),
     Port: 8000,
     Backlog: 100000,
@@ -34,8 +34,8 @@ func TestBuildConfiguration(t *testing.T) {
 func TestHttpServerConn(t *testing.T) {
   assert := assert.New(t)
 
-  config := (http_server.HttpConfiguration{Verbose: true}).Build()
-  server := http_server.New(config)
+  config := (server.Configuration{Verbose: true}).Build()
+  server := server.New(config)
 
   connChan, error := server.Start()
   defer server.Stop()

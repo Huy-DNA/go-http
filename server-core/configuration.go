@@ -1,4 +1,4 @@
-package http_server
+package server
 
 import (
 	"reflect"
@@ -6,14 +6,14 @@ import (
   "net"
 )
 
-type HttpConfiguration struct {
+type Configuration struct {
   Ip net.IP           `default:"127.0.0.1"`
   Port uint16         `default:"8000"`
   Backlog uint64      `default:"100000"`
   Verbose bool
 }
 
-func (config HttpConfiguration) Build() HttpConfiguration {
+func (config Configuration) Build() Configuration {
   typ := reflect.TypeOf(config)
 
   ip := config.Ip;
@@ -35,7 +35,7 @@ func (config HttpConfiguration) Build() HttpConfiguration {
     backlog, _ = strconv.ParseUint(f.Tag.Get("default"), 10, 64)
   }
 
-  return HttpConfiguration{
+  return Configuration{
     Ip: ip,
     Port: port,
     Backlog: backlog,

@@ -1,4 +1,4 @@
-package http_server
+package server
 
 import (
 	"io"
@@ -19,15 +19,15 @@ type eventsController struct {
   stopped bool
 }
 
-type HttpServer struct {
-  config HttpConfiguration
+type Server struct {
+  config Configuration
   eventsController
   sockFd uint16
   epollFd uint16
 }
 
-func New(config HttpConfiguration) HttpServer {
-  return HttpServer{
+func New(config Configuration) Server {
+  return Server{
     config: config,
     sockFd: 0,
     epollFd: 0,
@@ -39,7 +39,7 @@ func New(config HttpConfiguration) HttpServer {
   }
 }
 
-func (server *HttpServer) Start() (connChan <-chan *Connection, err error) {
+func (server *Server) Start() (connChan <-chan *Connection, err error) {
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
     server.sockFd = 0
@@ -100,7 +100,7 @@ func (server *HttpServer) Start() (connChan <-chan *Connection, err error) {
   return server.connChan, nil
 }
 
-func (server *HttpServer) Stop() {
+func (server *Server) Stop() {
   server.stopped = true
   if server.sockFd != 0 {
     syscall.Close(int(server.sockFd))
@@ -110,21 +110,21 @@ func (server *HttpServer) Stop() {
 
 // Internal methods
 
-func (server *HttpServer) loop() <-chan *Connection {
+func (server *Server) loop() <-chan *Connection {
   go server.loopAccept()
   go server.loopMessage()
 
   return server.connChan
 }
 
-func (server *HttpServer) loopAccept() {
+func (server *Server) loopAccept() {
   for !server.stopped {
     conn, _ := server.accept()
     server.connChan <- conn
   }
 }
 
-func (server *HttpServer) loopMessage() {
+func (server *Server) loopMessage() {
   var loggerDest io.Writer = os.Stdout
   if !server.config.Verbose {
     loggerDest = io.Discard
@@ -177,7 +177,7 @@ func (server *HttpServer) loopMessage() {
   }
 }
 
-func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
+func (server *Server) addConnToServerEpoll(nfd uint16) (err error) {
   epollEvents := syscall.EpollEvent {
     Events: syscall.EPOLLIN | syscall.EPOLLRDHUP | (syscall.EPOLLET & 0xffffffff), // edge-triggered mode, wait for reading readiness/reading disconnection from the remote peer
     Fd: int32(nfd),
@@ -190,7 +190,7 @@ func (server *HttpServer) addConnToServerEpoll(nfd uint16) (err error) {
   return nil
 }
 
-func (server *HttpServer) initEpoll() (err error) {
+func (server *Server) initEpoll() (err error) {
   if server.epollFd != 0 {
     syscall.Close(int(server.epollFd)) 
     server.epollFd = 0
@@ -207,7 +207,7 @@ func (server *HttpServer) initEpoll() (err error) {
   return nil
 }
 
-func (server *HttpServer) accept() (conn *Connection, err error) {
+func (server *Server) accept() (conn *Connection, err error) {
   nfd, cliAddr, error := syscall.Accept(int(server.sockFd)) 
 
   if error != nil {

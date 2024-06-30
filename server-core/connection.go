@@ -1,11 +1,11 @@
-package http_server
+package server
 
 import "syscall"
 
 type Connection struct {
   nfd uint16
   cliAddr syscall.Sockaddr
-  server *HttpServer
+  server *Server
 }
 
 func (conn *Connection) OnMessage(callback func([] byte)) {
