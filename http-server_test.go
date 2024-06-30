@@ -37,13 +37,17 @@ func TestHttpServerConn(t *testing.T) {
   config := (http_server.HttpConfiguration{Verbose: true}).Build()
   server := http_server.BuildServer(config)
 
-  _, error := server.Start()
+  connChan, error := server.Start()
   defer server.Stop()
 
   assert.Nil(error, "Error should be nil");
 
   time.Sleep(1000)
   simulateTcpConnect(8000)
+  conn := <-connChan
+  conn.OnMessage(func (data []byte) {
+    fmt.Println(data)
+  })
   time.Sleep(1000)
 }
 

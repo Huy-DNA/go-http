@@ -31,6 +31,11 @@ func BuildServer(config HttpConfiguration) HttpServer {
     config: config,
     sockFd: 0,
     epollFd: 0,
+    eventsController: eventsController{
+      mesSubs: sync.Map{},
+      connChan: make(chan *Connection, config.Backlog),
+      stopped: true,
+    },
   }
 }
 
