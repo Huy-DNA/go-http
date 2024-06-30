@@ -50,7 +50,8 @@ func TestHttpServerConn(t *testing.T) {
   }) 
   time.Sleep(1000)
   tcpConn.Write([]byte("Hello World"))
-  time.Sleep(1000)
+  tcpConn.Close()
+  time.Sleep(1000000)
 }
 
 func simulateTcpConnect(port uint16) *net.TCPConn {
