@@ -1,7 +1,7 @@
 package server
 
 import (
-	"syscall"
+  "syscall"
 )
 
 type Connection struct {
