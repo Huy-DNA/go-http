@@ -43,20 +43,23 @@ func TestHttpServerConn(t *testing.T) {
   assert.Nil(error, "Error should be nil");
 
   time.Sleep(1000)
-  simulateTcpConnect(8000)
+  tcpConn := simulateTcpConnect(8000)
   conn := <-connChan
   conn.OnMessage(func (data []byte) {
     fmt.Println(data)
-  })
+  }) 
+  time.Sleep(1000)
+  tcpConn.Write([]byte("Hello World"))
   time.Sleep(1000)
 }
 
-func simulateTcpConnect(port uint16) {
+func simulateTcpConnect(port uint16) *net.TCPConn {
   servAddr := fmt.Sprintf("localhost:%v", port)
   tcpAddr, _ := net.ResolveTCPAddr("tcp", servAddr)
   tcpConn, error := net.DialTCP("tcp", nil, tcpAddr)
   if error != nil {
     panic("Failed to dial TCP!")
   }
-  tcpConn.Write([]byte("Hello world!"));
+
+  return tcpConn
 }
