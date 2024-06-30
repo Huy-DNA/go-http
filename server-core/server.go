@@ -160,7 +160,7 @@ func (server *Server) loopMessage() {
         for {
           const BUFFER_SIZE uint = 1000
           pdata := make([]byte, BUFFER_SIZE)
-          n, err := syscall.Read(int(event.Fd), data)
+          n, err := syscall.Read(int(event.Fd), pdata)
           if err != nil {
             break
           }

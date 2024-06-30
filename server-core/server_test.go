@@ -48,10 +48,10 @@ func TestHttpServerConn(t *testing.T) {
   conn.OnMessage(func (data []byte) {
     fmt.Println(data)
   }) 
-  time.Sleep(1000)
+  time.Sleep(10000)
   tcpConn.Write([]byte("Hello World"))
   tcpConn.Close()
-  time.Sleep(1000000)
+  time.Sleep(10000000)
 }
 
 func simulateTcpConnect(port uint16) *net.TCPConn {
