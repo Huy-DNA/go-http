@@ -23,7 +23,7 @@ func (server *HttpServer) Start() (connChan *HttpConnection, err error) {
   if error != nil {
     return nil, error
   }
-  return &HttpConnection{conn: conn}, nil
+  return &HttpConnection{conn: conn, server: server}, nil
 }
 
 func (server *HttpServer) Stop() {

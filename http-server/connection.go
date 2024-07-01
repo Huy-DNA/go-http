@@ -6,4 +6,5 @@ import (
 
 type HttpConnection struct {
   conn <-chan *server.Connection 
+  server *HttpServer
 }
