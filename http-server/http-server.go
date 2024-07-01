@@ -47,14 +47,15 @@ func getReqChan(connChan <-chan *server.Connection) chan Request {
   reqChan := make(chan Request)
   go func() {
     for conn := range connChan {
-      req := Request{}
+      remoteAddr := RemoteAddress{Ip: conn.RemoteIp(), Port: conn.RemotePort()}
+      req := Request{remoteAddr: remoteAddr}
       buffer := make([]byte, 0)
       conn.OnMessage(func(bytes []byte) {
         buffer := append(buffer, bytes...)
         done := partialFill(&req, &buffer)
         if done {
           reqChan <- req
-          req = Request{}
+          req = Request{remoteAddr: remoteAddr}
         }
       })
     }

@@ -25,3 +25,11 @@ func (conn *Connection) OnMessage(callback func([] byte)) {
     }
   }()
 }
+
+func (conn *Connection) RemoteIp() string {
+  return string(conn.cliAddr.(*syscall.SockaddrInet6).Addr[:])
+}
+
+func (conn *Connection) RemotePort() uint16 {
+  return uint16(conn.cliAddr.(*syscall.SockaddrInet6).Port)
+}
