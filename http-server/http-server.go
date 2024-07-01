@@ -43,6 +43,26 @@ func (server *HttpServer) Stop() {
   server.req = nil
 }
 
-func getReqChan(conn <-chan *server.Connection) chan Request {
-  return nil
+func getReqChan(connChan <-chan *server.Connection) chan Request {
+  reqChan := make(chan Request)
+  go func() {
+    for conn := range connChan {
+      req := Request{}
+      buffer := make([]byte, 0)
+      conn.OnMessage(func(bytes []byte) {
+        buffer := append(buffer, bytes...)
+        done := partialFill(&req, &buffer)
+        if done {
+          reqChan <- req
+          req = Request{}
+        }
+      })
+    }
+  }()
+
+  return reqChan
+}
+
+func partialFill(req *Request, buffer *[]byte) (done bool) {
+  return false
 }
