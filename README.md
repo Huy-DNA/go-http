@@ -9,6 +9,7 @@ This is a challenge which aims at implementing an HTTP server from scratch using
 
 ## Requirements
 
+* Should be HTTP/1.1-compliant (P2)
 * Able to handle multiple concurrent TCP connection. (P1)
 * Should perform request assembly. (P1)
 * Should be able to parse HTTP requests. (P1)
@@ -17,3 +18,7 @@ This is a challenge which aims at implementing an HTTP server from scratch using
 * Can act as a static HTTP server as the fallback behavior. (P2)
 * Allow server configuration. (P2)
 * Perform response compression. (P3)
+
+## References
+
+* HTTP/1.1 spec: https://www.rfc-editor.org/rfc/rfc7230#section-3.3.3
