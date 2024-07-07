@@ -26,6 +26,14 @@ func (conn *Connection) OnMessage(callback func([] byte)) {
   }()
 }
 
+func (conn *Connection) Write(bytes [] byte) (err error) {
+  _, error := syscall.Write(int(conn.nfd), bytes)
+  if error != nil {
+    return error
+  }
+  return nil
+}
+
 func (conn *Connection) RemoteIp() string {
   return string(conn.cliAddr.(*syscall.SockaddrInet6).Addr[:])
 }
