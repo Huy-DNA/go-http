@@ -10,7 +10,7 @@ This is a challenge which aims at implementing an HTTP server from scratch using
 ## Requirements
 
 - [ ] Should be HTTP/1.1-compliant (P2)
-- [ ] Able to handle multiple concurrent TCP connection. (P1)
+- [X] Able to handle multiple concurrent TCP connection. (P1)
 - [ ] Should perform request assembly. (P1)
 - [ ] Should be able to parse HTTP requests. (P1)
 - [ ] Allow defining handlers for requests. (P1)
