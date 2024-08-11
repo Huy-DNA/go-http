@@ -1,43 +1,43 @@
 package server
 
 import (
-  "syscall"
+	"syscall"
 )
 
 type Connection struct {
-  nfd uint16
-  cliAddr syscall.Sockaddr
-  server *Server
+	nfd     uint16
+	cliAddr syscall.Sockaddr
+	server  *Server
 }
 
-func (conn *Connection) OnMessage(callback func([] byte)) {
-  buffer := make(chan []byte)
-  conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, buffer: buffer})
+func (conn *Connection) OnMessage(callback func([]byte)) {
+	buffer := make(chan []byte)
+	conn.server.mesSubs.Store(conn.nfd, messageSubscriber{conn: conn, buffer: buffer})
 
-  go func() {
-    for {
-      select {
-      case data := <-buffer:
-        callback(data)
-      case <-conn.server.quitChan:
-        return
-      }
-    }
-  }()
+	go func() {
+		for {
+			select {
+			case data := <-buffer:
+				callback(data)
+			case <-conn.server.quitChan:
+				return
+			}
+		}
+	}()
 }
 
-func (conn *Connection) Write(bytes [] byte) (err error) {
-  _, error := syscall.Write(int(conn.nfd), bytes)
-  if error != nil {
-    return error
-  }
-  return nil
+func (conn *Connection) Write(bytes []byte) (err error) {
+	_, error := syscall.Write(int(conn.nfd), bytes)
+	if error != nil {
+		return error
+	}
+	return nil
 }
 
 func (conn *Connection) RemoteIp() string {
-  return string(conn.cliAddr.(*syscall.SockaddrInet6).Addr[:])
+	return string(conn.cliAddr.(*syscall.SockaddrInet6).Addr[:])
 }
 
 func (conn *Connection) RemotePort() uint16 {
-  return uint16(conn.cliAddr.(*syscall.SockaddrInet6).Port)
+	return uint16(conn.cliAddr.(*syscall.SockaddrInet6).Port)
 }
